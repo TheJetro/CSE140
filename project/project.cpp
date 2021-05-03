@@ -17,7 +17,7 @@ void Decode(string instruction);
 void Execute(string alu_op, string rt, string rs, string imm);
 void Mem(string saveorload, string rt, int data);
 void Writeback(string rt, int value);
-string ControlUnit(string opcode);
+string ControlUnit(string operation);
 int toInt(string convertMe);
 
 void Fetch(string instruction){
@@ -33,41 +33,42 @@ void rHandler(string instruction){
     string shamt = instruction.substr(21,5);
     string funct = instruction.substr(26,6);
 
-    printf("\nOperation:");
+    // printf("\nOperation:");
 
     if(toInt(funct) == 32){
-        printf(" add");
+        //printf(" add");
     }else if (toInt(funct) == 36) {
-        printf(" and");
+        //printf(" and");
     }else if(toInt(funct) == 39){
-        printf(" nor");
+        //printf(" nor");
     }else if(toInt(funct) == 37){
-        printf(" or");
+        //printf(" or");
     }else if(toInt(funct) == 42){
-        printf(" slt");
+        //printf(" slt");
     }else if(toInt(funct) == 34){
-        printf(" sub");
+        //printf(" sub");
+        Execute(ControlUnit(funct), rd, rs, rt); //executing sub for SUB
     }else{
         cout << "Unknown" << toInt(funct) << endl;
     }
 
-    printf("\nRs: ");
-    printf("(R%i", toInt(rs));
-    printf(")");
+    // printf("\nRs: ");
+    // printf("(R%i", toInt(rs));
+    // printf(")");
 
-    printf("\nRt: ");
-    printf("(R%i", toInt(rt));
-    printf(")");
+    // printf("\nRt: ");
+    // printf("(R%i", toInt(rt));
+    // printf(")");
     
-    printf("\nRd: ");
-    printf("(R%i", toInt(rd));
-    printf(")");
+    // printf("\nRd: ");
+    // printf("(R%i", toInt(rd));
+    // printf(")");
 
-    printf("\nShamt: ");
-    printf("%i", toInt(shamt));
+    // printf("\nShamt: ");
+    // printf("%i", toInt(shamt));
 
-    printf("\nFunct: ");
-    printf("%i", toInt(funct));
+    // printf("\nFunct: ");
+    // printf("%i", toInt(funct));
 }
 
 void iHandler(string instruction){
@@ -111,7 +112,7 @@ void Decode(string instruction){
         printf("\nInstruction Type: J");
         jHandler(instruction);
     } else if (toInt(opcode) == 0){ //if opcode is zero we know instruction is R type
-        printf("\nInstruction Type: R");
+        //printf("\nInstruction Type: R");
         rHandler(instruction);
     } else { //if opcode is not zero we know instruction is I type
         //printf("\nInstruction Type: I");
@@ -119,17 +120,38 @@ void Decode(string instruction){
     }
 }
 
-void Execute(string alu_op, string rt, string rs, string imm){
+void Execute(string alu_op, string destination, string rs, string immORrt){
     if(alu_op == "0000"){
         //AND &&
     } else if (alu_op == "0001"){
         //OR ||
     } else if (alu_op == "0010"){
         //ADD +
-        int result = registerfile[toInt(rs)] + toInt(imm); //112 + 4 = 116
-        Mem("lw", rt, result);
+        int result = registerfile[toInt(rs)] + toInt(immORrt); //112 + 4 = 116
+        Mem("lw", destination, result);
     } else if (alu_op == "0110"){
         //SUB -
+        int result = registerfile[toInt(rs)] - registerfile[toInt(immORrt)];  //NEED IMPLEMENTATION OF CONTROL UNIT TO BE ABLE TO FUNCTION AS INTENDED
+        registerfile[toInt(destination)] = result; 
+
+        //USING THIS FOR NOW UNTIL CONTROL UNIT IS IMPLEMENTED PROPERLY
+        total_clock_cycles = total_clock_cycles + 1;
+
+        cout << "\ntotal_clock_cycles " << total_clock_cycles << " :" << endl;
+        
+        //next 3 lines convert simp int value to chad hex result
+        stringstream ss;
+        ss << hex << registerfile[toInt(destination)];
+        string res = ss.str();
+
+        //next 3 lines convert simp int pc value to chad hex pc value
+        pc = next_pc;
+        stringstream ssp;
+        ssp << hex << pc;
+        string pcres = ssp.str();
+
+        cout << registerHandler(toInt(destination)) << " is modified to 0x" << res << endl;
+        cout << "pc is modified to 0x" << pcres << endl;
     } else if (alu_op == "0111"){
         //SLT For set-on-less-than, you may want to run a 
         //combination of C/C++ lines to compare two values 
@@ -178,13 +200,18 @@ void Writeback(string rt, int value){
 }
 
 string ControlUnit(string operation){
-    string alu_op;
+    string alu_op; // 0000 is AND, 0001 is OR, 0010 is ADD, 0110 is SUB, 0111 is SLT, 1100 is NOR
     
     if (toInt(operation) == 35) {
         //if operation is LW
         RegDst = 0, ALUSrc = 1, MemtoReg = 1, RegWrite = 1, MemRead = 1, MemWrite = 0, Branch = 0;
         //Jump = ?, InstType = ?;
         alu_op = "0010";
+    } else if (toInt(operation) == 34){
+        //if operation is SUB
+        RegDst = 1, ALUSrc = 0, MemtoReg = 0, RegWrite = 1, MemRead = 0, MemWrite = 0, Branch = 0;
+        //Jump = ?, InstType = ?;
+        alu_op = "0110";
     }
 
     return alu_op;
