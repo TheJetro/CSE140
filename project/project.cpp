@@ -45,9 +45,10 @@ void rHandler(string instruction){
         //printf(" or");
     }else if(toInt(funct) == 42){
         //printf(" slt");
+        Execute(ControlUnit(funct), rd, rs, rt); //executing slt for SLT    R[rd] = (R[rs] < R[rt]) ? 1 : 0
     }else if(toInt(funct) == 34){
         //printf(" sub");
-        Execute(ControlUnit(funct), rd, rs, rt); //executing sub for SUB
+        Execute(ControlUnit(funct), rd, rs, rt); //executing sub for SUB    R[rd] = R[rs] - R[rt]
     }else{
         cout << "Unknown" << toInt(funct) << endl;
     }
@@ -80,9 +81,10 @@ void iHandler(string instruction){
     //printf("\nOperation:");
 
     if (toInt(operation) == 4) {
-        printf(" beq");
+        //printf(" beq");
+        Execute(ControlUnit(operation), rt, rs, imm); //executing sub for BEQ
     }else if (toInt(operation) == 43) {
-        printf(" sw");
+        //printf(" sw");
     }else if (toInt(operation) == 35) {
         //printf(" lw");
         Execute(ControlUnit(operation), rt, rs, imm); //executing add for LW
@@ -130,8 +132,62 @@ void Execute(string alu_op, string destination, string rs, string immORrt){
         int result = registerfile[toInt(rs)] + toInt(immORrt); //112 + 4 = 116
         Mem("lw", destination, result);
     } else if (alu_op == "0110"){
-        //SUB -
-        int result = registerfile[toInt(rs)] - registerfile[toInt(immORrt)];  //NEED IMPLEMENTATION OF CONTROL UNIT TO BE ABLE TO FUNCTION AS INTENDED
+        //SUB -   also used by BEQ
+        if (Jump == 1 && InstType == 0){
+            int result = registerfile[toInt(rs)] - registerfile[toInt(immORrt)];  //NEED IMPLEMENTATION OF CONTROL UNIT TO BE ABLE TO FUNCTION AS INTENDED
+            
+            //USING THIS FOR NOW UNTIL CONTROL UNIT IS IMPLEMENTED PROPERLY
+            total_clock_cycles = total_clock_cycles + 1;
+            cout << "\ntotal_clock_cycles " << total_clock_cycles << " :" << endl;    
+                if(result == 0){
+                    int sl2 = toInt(immORrt);
+                    sl2 = sl2 << 2;
+                    branch_target = next_pc + sl2;
+                } else {
+                    branch_target = next_pc;
+                }
+
+                
+            
+            pc = branch_target;
+            //next 3 lines convert simp int pc value to chad hex pc value
+            stringstream ssp;
+            ssp << hex << branch_target;
+            string pcres = ssp.str();
+
+            cout << "pc is modified to 0x" << pcres << endl;
+        } else {
+            int result = registerfile[toInt(rs)] - registerfile[toInt(immORrt)];  //NEED IMPLEMENTATION OF CONTROL UNIT TO BE ABLE TO FUNCTION AS INTENDED
+            registerfile[toInt(destination)] = result; 
+
+            //USING THIS FOR NOW UNTIL CONTROL UNIT IS IMPLEMENTED PROPERLY
+            total_clock_cycles = total_clock_cycles + 1;
+
+            cout << "\ntotal_clock_cycles " << total_clock_cycles << " :" << endl;
+            
+            //next 3 lines convert simp int value to chad hex result
+            stringstream ss;
+            ss << hex << registerfile[toInt(destination)];
+            string res = ss.str();
+
+            //next 3 lines convert simp int pc value to chad hex pc value
+            pc = next_pc;
+            stringstream ssp;
+            ssp << hex << pc;
+            string pcres = ssp.str();
+
+            cout << registerHandler(toInt(destination)) << " is modified to 0x" << res << endl;
+            cout << "pc is modified to 0x" << pcres << endl;
+        }
+    } else if (alu_op == "0111"){
+        int result = 0;
+        //SLT For set-on-less-than, you may want to run a 
+        //combination of C/C++ lines to compare two values 
+        //and generate the set/unset output
+        if (registerfile[toInt(rs)] < registerfile[toInt(immORrt)]){
+            result = 1;
+        }
+        //NEED IMPLEMENTATION OF CONTROL UNIT TO BE ABLE TO FUNCTION AS INTENDED
         registerfile[toInt(destination)] = result; 
 
         //USING THIS FOR NOW UNTIL CONTROL UNIT IS IMPLEMENTED PROPERLY
@@ -152,10 +208,6 @@ void Execute(string alu_op, string destination, string rs, string immORrt){
 
         cout << registerHandler(toInt(destination)) << " is modified to 0x" << res << endl;
         cout << "pc is modified to 0x" << pcres << endl;
-    } else if (alu_op == "0111"){
-        //SLT For set-on-less-than, you may want to run a 
-        //combination of C/C++ lines to compare two values 
-        //and generate the set/unset output 
     } else if (alu_op == "1100"){
         //NOR
     } else {
@@ -205,12 +257,23 @@ string ControlUnit(string operation){
     if (toInt(operation) == 35) {
         //if operation is LW
         RegDst = 0, ALUSrc = 1, MemtoReg = 1, RegWrite = 1, MemRead = 1, MemWrite = 0, Branch = 0;
-        //Jump = ?, InstType = ?;
+        Jump = 0, InstType = 1;
         alu_op = "0010";
-    } else if (toInt(operation) == 34){
+    }else if (toInt(operation) == 34){
         //if operation is SUB
         RegDst = 1, ALUSrc = 0, MemtoReg = 0, RegWrite = 1, MemRead = 0, MemWrite = 0, Branch = 0;
-        //Jump = ?, InstType = ?;
+        Jump = 0, InstType = 0;
+        alu_op = "0110";
+    }else if (toInt(operation) == 42){
+        //if operation is SLT
+        RegDst = 1, ALUSrc = 0, MemtoReg = 0, RegWrite = 1, MemRead = 0, MemWrite = 0, Branch = 0;
+        Jump = 0, InstType = 0;
+        alu_op = "0111";
+    }else if (toInt(operation) == 4){
+        //if operation is BEQ
+        //RegDst = X, MemtoReg = X unsure how to implement when it is X
+        RegDst = 0, ALUSrc = 0, MemtoReg = 0, RegWrite = 0, MemRead = 0, MemWrite = 0, Branch = 1;
+        Jump = 1, InstType = 0;
         alu_op = "0110";
     }
 
