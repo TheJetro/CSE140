@@ -161,10 +161,10 @@ void Writeback(string rt, int value){
 
     cout << "\ntotal_clock_cycles " << total_clock_cycles << " :" << endl;
     
-    registerfile[toInt(rt)] = value;
+    registerfile[toInt(rt)] = value; //value for lw should be 116 here
     //next 3 lines convert simp int value to chad hex result
     stringstream ss;
-    ss << hex << value;
+    ss << hex << registerfile[toInt(rt)];
     string res = ss.str();
 
     //next 3 lines convert simp int pc value to chad hex pc value
