@@ -79,8 +79,6 @@ void iHandler(string instruction){
     string rt = instruction.substr(11,5);
     string imm = instruction.substr(16,16);
 
-    cout << operation << endl;
-    cout << imm << endl;
     //printf("\nOperation:");
 
     if (toInt(operation) == 4) {
@@ -114,7 +112,6 @@ void jHandler(string instruction){
 
 void Decode(string instruction){
     string opcode = instruction.substr(0,6);
-    cout << opcode << endl;
     if(toInt(opcode) == 2 || toInt(opcode) == 3){
         printf("\nInstruction Type: J");
         jHandler(instruction);
@@ -134,7 +131,6 @@ void Execute(string alu_op, string destination, string rs, string immORrt){
         //OR ||
     } else if (alu_op == "0010"){
         //ADD +
-        cout <<" -----" <<alu_op << "---" << MemRead << InstType << endl;
         if (MemRead == 0 && InstType == 0){  //if we are SW instruction
         int result = registerfile[toInt(rs)] + toInt(immORrt); 
         Mem("sw", destination, result);
@@ -246,16 +242,18 @@ void Mem(string saveorload, string rt, int data){
         ss << hex << dmem[data/4];
         string res = ss.str();
 
+        stringstream sd;
+        sd << hex << data;
+        string mres = sd.str();
+
         //next 3 lines convert simp int pc value to chad hex pc value
         pc = next_pc;
         stringstream ssp;
         ssp << hex << pc;
         string pcres = ssp.str();
 
-        cout << registerHandler(toInt(rt)) << " is modified to 0x" << res << endl;
+        cout << "memory 0x" << mres << " is modified to 0x" << res << endl;
         cout << "pc is modified to 0x" << pcres << endl;
-
-        done = true;
     }
 }
 
@@ -285,13 +283,11 @@ void Writeback(string rt, int value){
 
 string ControlUnit(string operation){
     string alu_op; // 0000 is AND, 0001 is OR, 0010 is ADD, 0110 is SUB, 0111 is SLT, 1100 is NOR
-    cout << operation << endl;
     if (toInt(operation) == 35) {
         //if operation is LW
         RegDst = 0, ALUSrc = 1, MemtoReg = 1, RegWrite = 1, MemRead = 1, MemWrite = 0, Branch = 0;
         Jump = 0, InstType = 0;
         alu_op = "0010";
-        cout << alu_op;
     }else if (toInt(operation) == 34){
         //if operation is SUB
         RegDst = 1, ALUSrc = 0, MemtoReg = 0, RegWrite = 1, MemRead = 0, MemWrite = 0, Branch = 0;
@@ -310,7 +306,6 @@ string ControlUnit(string operation){
         alu_op = "0110";
     }else if (toInt(operation) == 43){
         //if operation is SW
-        cout << operation << endl;
         //RegDst = X, MemtoReg = X unsure how to implement when it is X
         RegDst = 0, ALUSrc = 1, MemtoReg = 0, RegWrite = 0, MemRead = 0, MemWrite = 1, Branch = 1;
         Jump = 0, InstType = 0;
@@ -410,50 +405,26 @@ int main () {
     dmem[29] = 16; //16           0x74 = 0x10
 
     string instruction;
+    int filelinecount = 0;
 
-  //ifstream textFile ("loadwording.txt");
-    fstream textFile("loadwording.txt");
-
-    // textFile.seekg(0, textFile.end);
-    // int length = textFile.tellg();
-    // textFile.seekg(0, textFile.beg);
-    while(!done){
-        textFile.seekg(pc*8);
-        char instructions[33];
-        textFile.read(instructions, 33);
-        instructions[33] = 0;
-        instruction = instructions;
-        cout << instruction << endl;
-        Fetch(instruction);
-        // if (pc*8 >= length){
-        //     done = true;
-        // }
+    ifstream inputFile ("sample_binary.txt");
+    while(getline(inputFile,instruction)){
+        ++filelinecount;
     }
-    
-    textFile.close();
-    
-    
 
-//   if (textFile.is_open())
-//   {
-//       textFile.seekg(0, textFile.end);
-//       int length = textFile.tellg();
-//       textFile.seekg(0, textFile.beg);
+    ifstream textFile ("sample_binary.txt");
+    if (textFile.is_open())
+    {
+        for (int lineno = 0; getline (textFile,instruction) && lineno < filelinecount; lineno++){ 
+            if (lineno == pc/4){
+                Fetch(instruction);
+            }
+        }
+        textFile.close();
+    }
+    else cout << "Unable to open file"; 
 
-//       char * instructions = new char [length];
+    cout << "\nprogram terminated:\ntotal execution time is " << total_clock_cycles << " cycles"; 
 
-//     while ( !done  )
-//     {
-//         textFile.read(instructions, 16)
-//         getline (textFile,instruction)
-//       Fetch(instruction);   
-//     }
-//     textFile.close();
-//   }
-
-//   else cout << "Unable to open file"; 
-
-  cout << "\nprogram terminated:\ntotal execution time is " << total_clock_cycles << " cycles"; 
-
-  return 0;
+    return 0;
 }
