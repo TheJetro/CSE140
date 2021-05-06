@@ -405,14 +405,20 @@ int main () {
     dmem[29] = 16; //16           0x74 = 0x10
 
     string instruction;
+    string filename;
     int filelinecount = 0;
 
-    ifstream inputFile ("sample_binary.txt");
+
+    cout << "Enter the program file name to run:" << endl;
+    cin >> filename;
+    cout << endl;
+
+    ifstream inputFile (filename);
     while(getline(inputFile,instruction)){
         ++filelinecount;
     }
 
-    ifstream textFile ("sample_binary.txt");
+    ifstream textFile (filename);
     if (textFile.is_open())
     {
         for (int lineno = 0; getline (textFile,instruction) && lineno < filelinecount; lineno++){ 
