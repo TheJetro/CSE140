@@ -410,8 +410,8 @@ int main () {
 
 
     cout << "Enter the program file name to run:" << endl;
-    cin >> filename;
     cout << endl;
+    cin >> filename;
 
     ifstream inputFile (filename);
     while(getline(inputFile,instruction)){
